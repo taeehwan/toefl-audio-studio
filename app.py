@@ -126,12 +126,14 @@ def parse_with_gemini(text, task_name, task_info, api_key):
     
     Instructions:
     1. Parse the input text into a CSV with 'role' and 'text'.
-    2. Map the speakers in the text to the Expected Roles.
-       - If you see "M:", map to "Man" or "Student (M)".
-       - If you see "W:", map to "Woman" or "Student (F)".
-       - If there is unlabeled intro text, assign to "Narrator".
-    3. Clean up non-spoken text (parentheses, noise markers).
-    4. CRITICAL: Wrap 'text' in double quotes ("") to handle commas.
+    2. Map the speakers to the Expected Roles.
+       - "M:" -> "Man" or "Student (M)"
+       - "W:" -> "Woman" or "Student (F)"
+       - "Narrator:" lines ARE spoken text. Must be included.
+       - If there is unlabeled intro text, assign it to "Narrator".
+    3. Include ALL spoken lines, especially the introductory Narrator line.
+    4. Clean up strictly non-spoken text (like page numbers or '(listening)'), but keep the intro sentence.
+    5. CRITICAL: Wrap 'text' in double quotes ("") to handle commas.
     
     Raw Output ONLY (no markdown):
     """
