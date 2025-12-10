@@ -268,6 +268,15 @@ with col_input:
                 if df is not None:
                     # Clean columns
                     df.columns = [c.lower().strip() for c in df.columns]
+                    
+                    # Force normalize columns if we have at least 2
+                    if len(df.columns) >= 2:
+                        # Rename first two columns to what we expect, regardless of what LLM named them
+                        new_cols = list(df.columns)
+                        new_cols[0] = 'role'
+                        new_cols[1] = 'text'
+                        df.columns = new_cols
+                    
                     st.session_state['df'] = df
                     st.success("Analysis Complete!")
 
