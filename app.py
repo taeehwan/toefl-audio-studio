@@ -379,7 +379,7 @@ def produce_audio(df, task_config, api_key):
             assets.append(out_path)
         except Exception as e:
             st.error(f"Gen Error: {e}")
-            return None
+            return None, None
         prog_bar.progress((i+1)/len(df))
         
     # 2. Mix
@@ -420,9 +420,15 @@ def produce_audio(df, task_config, api_key):
         )
     except subprocess.CalledProcessError as e:
         st.error(f"FFmpeg Merge Failed: {e.stderr.decode()}")
-        return None
+        return None, None
 
-    return final_path
+    # 3. Zip Creation
+    zip_path = os.path.join(OUTPUT_DIR_FINAL, "clips.zip")
+    with zipfile.ZipFile(zip_path, 'w') as zipf:
+        for asset in assets:
+            zipf.write(asset, os.path.basename(asset))
+
+    return final_path, zip_path
 
 # --- UI Interface ---
 
