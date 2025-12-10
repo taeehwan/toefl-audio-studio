@@ -129,11 +129,12 @@ def parse_with_gemini(text, task_name, task_info, api_key):
     2. Map the speakers to the Expected Roles.
        - "M:" -> "Man" or "Student (M)"
        - "W:" -> "Woman" or "Student (F)"
-       - "Narrator:" lines ARE spoken text. Must be included.
-       - If there is unlabeled intro text, assign it to "Narrator".
-    3. Include ALL spoken lines, especially the introductory Narrator line.
-    4. Clean up strictly non-spoken text (like page numbers or '(listening)'), but keep the intro sentence.
-    5. CRITICAL: Wrap 'text' in double quotes ("") to handle commas.
+    3. HANDLING NARRATOR (CRITICAL):
+       - The text often starts with a context line like "Listen to a conversation...".
+       - You MUST treat this as SPOKEN TEXT assigned to "Narrator".
+       - Do NOT remove it. Do NOT treat it as 'context' to be ignored.
+       - If there is unlabeled text at the top, assign it to "Narrator".
+    4. CRITICAL: Wrap 'text' in double quotes ("") to handle commas.
     
     Raw Output ONLY (no markdown):
     """
