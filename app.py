@@ -305,23 +305,22 @@ def parse_with_gemini(text, task_name, task_info, api_key):
     
     prompt = f"""
     You are a TOEFL Script Formatter.
-    Task Type: {task_name}
-    Description: {task_info['desc']}
-    Expected Roles: {", ".join(task_info['roles'])}
+    Task: {task_name} (Roles: {", ".join(task_info['roles'])})
     
-    Instructions:
-    1. Parse the input text into a CSV with 'role' and 'text'.
-    2. Map the speakers to the Expected Roles.
-       - "M:" -> "Man" or "Student (M)"
-       - "W:" -> "Woman" or "Student (F)"
-    3. HANDLING NARRATOR (CRITICAL):
-       - The text often starts with a context line like "Listen to a conversation...".
-       - You MUST treat this as SPOKEN TEXT assigned to "Narrator".
-       - Do NOT remove it. Do NOT treat it as 'context' to be ignored.
-       - If there is unlabeled text at the top, assign it to "Narrator".
-    4. CRITICAL: Wrap 'text' in double quotes ("") to handle commas.
+    RULES:
+    1. Parse text to CSV (role, text).
+    2. "Listen to..." or any intro text IS SPOKEN TEXT -> Assign to "Narrator".
+    3. Quotes around 'text'.
+    4. Start immediately.
     
-    Raw Output ONLY (no markdown):
+    EXAMPLE INPUT:
+    Listen to a conversation between a student and a professor.
+    Student: Hi professor.
+    
+    EXAMPLE OUTPUT:
+    role,text
+    "Narrator","Listen to a conversation between a student and a professor."
+    "Student","Hi professor."
     """
     try:
         response = model.generate_content([prompt, text])
