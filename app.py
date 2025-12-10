@@ -324,9 +324,14 @@ def parse_with_gemini(text, task_name, task_info, api_key):
     """
     try:
         response = model.generate_content([prompt, text])
-        return pd.read_csv(io.StringIO(response.text), quotechar='"', skipinitialspace=True)
+        cleaned_csv = response.text.replace("```csv", "").replace("```", "").strip()
+        # Use python engine to auto-detect separator if comma fails, though we expect comma
+        return pd.read_csv(io.StringIO(cleaned_csv), quotechar='"', skipinitialspace=True, sep=',', on_bad_lines='skip') 
     except Exception as e:
-        st.error(f"LLM Error: {e}")
+        st.error(f"LLM Parsing Error: {e}")
+        if 'response' in locals():
+            with st.expander("Debug Raw Output"):
+                st.code(response.text)
         return None
 
 def get_audio_duration(file_path):
