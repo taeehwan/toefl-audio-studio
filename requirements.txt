@@ -1,0 +1,6 @@
+elevenlabs
+python-dotenv
+pandas
+pydub
+streamlit
+google-generativeai

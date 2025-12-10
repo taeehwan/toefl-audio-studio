@@ -1,0 +1,25 @@
+filename,text,voice_id
+003_Narrator,"Listen to a conversation between a student and a receptionist at the Registrar’s Office on the first day of the semester.",cjVigY5qzO86Huf0OWal
+004_Student,"Excuse me, I’m supposed to be having my physics class in the science building, but no one’s in the classroom. Could you tell me where the class is? Physics 403 — has it been moved?",FGY2WhTYpPnrIDTdsKH5
+005_Receptionist,"Well, there’s a room assignment sheet on the bulletin board outside this office.",iP95p4xoKVk53GoZ742B
+006_Student,"Yeah, I know, but my class isn’t listed there. There must be some kind of mistake or something. Could you look it up, please?",FGY2WhTYpPnrIDTdsKH5
+007_Receptionist,"Hmmm... ok, let me check on the computer. It’s physics, right? Wait, did you say physics 403?",iP95p4xoKVk53GoZ742B
+008_Student,"Yeah.",FGY2WhTYpPnrIDTdsKH5
+009_Receptionist,"Er…I’m sorry, but it says here that it was cancelled. You should have gotten a letter from the registrar’s office about this.",iP95p4xoKVk53GoZ742B
+010_Student,"What? I’ve never got it.",FGY2WhTYpPnrIDTdsKH5
+011_Receptionist,"Are you sure? ‘Cause it says on the computer that the letter was sent out to students a week ago.",iP95p4xoKVk53GoZ742B
+012_Student,"Really? I should have gotten it by now. I wonder if I threw it away with all the junk mail by mistake.",FGY2WhTYpPnrIDTdsKH5
+013_Receptionist,"Well, it does happen. Er… let me check something. What’s your name?",iP95p4xoKVk53GoZ742B
+014_Student,"Woodhouse, Laura Woodhouse.",FGY2WhTYpPnrIDTdsKH5
+015_Receptionist,"Ok, hmmm…Woodhouse, let me see… ah, it says here we sent it to your apartment on er… Center Street.",iP95p4xoKVk53GoZ742B
+016_Student,"Oh, that’s my old apartment. I moved out of there a little while ago.",FGY2WhTYpPnrIDTdsKH5
+017_Receptionist,"Well, and I suppose you haven’t changed your mailing address at the administration office. Well, that would explain it.",iP95p4xoKVk53GoZ742B
+018_Student,"Yeah, I guess that’s it. But how can they cancel the class after offering it. If I’d known this was going to happen, I would have taken it last semester.",FGY2WhTYpPnrIDTdsKH5
+019_Receptionist,"I know, it’s really inconvenient for you, I understand that, but er… if we don’t have enough students signed up for the course, the college can’t offer it. You know, it’s a practical issue, like we can’t have an instructor when there’re only a few students in the class. You see what I mean?",iP95p4xoKVk53GoZ742B
+020_Student,"I guess, but now I don’t know what course I should take instead.",FGY2WhTYpPnrIDTdsKH5
+021_Receptionist,"Ok, let’s see. Do you have any courses you’re going to take next semester? If you do, you might want to take them now and sign up for physics 403 next semester.",iP95p4xoKVk53GoZ742B
+022_Student,"Yeah, I guess I could do that. I just hope it won't be cancelled again. Do you know how many people have to be enrolled in order to keep a class from being cancelled?",FGY2WhTYpPnrIDTdsKH5
+023_Receptionist,"Well, it depends on the class, but for that class, you have to have er… let’s see, usually it’d be at least ten people, but since it was cancelled this semester, they might even do it with less. But do you know what you should do? Give the physics department a call a couple of weeks before the semester starts. They’ll be able to tell you if they’re planning to go through with it. It's their decision, actually.",iP95p4xoKVk53GoZ742B
+024_Student,"Oh, ok, I will do that. Thanks for the info.",FGY2WhTYpPnrIDTdsKH5
+025_Receptionist,"No problem. Sorry about the class. Oh, why don’t you go change your mailing address now. It’ll only takes a minute.",iP95p4xoKVk53GoZ742B
+026_Student,"Oh, oh, sure, I will do that right way.",FGY2WhTYpPnrIDTdsKH5
