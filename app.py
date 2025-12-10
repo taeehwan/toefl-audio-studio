@@ -348,6 +348,16 @@ def produce_audio(df, task_config, api_key):
     
     # 1. Generate
     prog_bar = st.progress(0, text="Generating Voices...")
+
+    # Safety: Validate columns
+    if 'role' not in df.columns or 'text' not in df.columns:
+        if len(df.columns) >= 2:
+            # Fallback: Assert 1st col is role, 2nd is text
+            df = df.rename(columns={df.columns[0]: 'role', df.columns[1]: 'text'})
+        else:
+            st.error("Data Error: Table must have at least two columns (Role, Text).")
+            return None, None
+
     for i, row in df.iterrows():
         role = row['role']
         text = row['text']
