@@ -203,7 +203,9 @@ def produce_audio(df, task_config, api_key):
     
     with open(concat_path, 'w') as f:
         for i, path in enumerate(assets):
-            f.write(f"file '{path}'\n")
+            # Use ABSOLUTE PATHS to avoid FFmpeg directory confusion
+            abs_path = os.path.abspath(path)
+            f.write(f"file '{abs_path}'\n")
             
             # Silence Logic
             pause = 0.5 # Default
@@ -214,16 +216,26 @@ def produce_audio(df, task_config, api_key):
                 dur = get_audio_duration(path)
                 pause = max(2.0, dur * 1.5)
             elif mix_logic == "interview":
-                pause = 5.0 # Fixed gap for response? Or user config? 
+                pause = 5.0 # Fixed gap
                 
             # Don't add silence after last clip
             if i < len(assets) - 1:
                 sil = generate_silence(pause, f"sil_{i}.mp3")
-                f.write(f"file '{sil}'\n")
+                sil_abs = os.path.abspath(sil)
+                f.write(f"file '{sil_abs}'\n")
                 
     final_path = os.path.join(OUTPUT_DIR_FINAL, FINAL_FILENAME)
-    subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_path, "-c", "copy", final_path],
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    
+    # Run FFmpeg (capture output to debug if needed)
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_path, "-c", "copy", final_path],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        st.error(f"FFmpeg Merge Failed: {e.stderr.decode()}")
+        return None
+
     return final_path
 
 # --- UI Interface ---
