@@ -197,34 +197,6 @@ def produce_audio(df, task_config, api_key):
 
 # ... (UI code) ...
 
-with col_preview:
-    st.subheader("2. Production")
-    
-    if 'df' in st.session_state:
-        edited_df = st.data_editor(st.session_state['df'], num_rows="dynamic", use_container_width=True)
-        
-        if st.button("🎙️ Generate Audio Track"):
-            if not key_eleven:
-                st.error("ElevenLabs Key missing")
-            else:
-                final_file, zip_file = produce_audio(edited_df, task_config, key_eleven)
-                
-                if final_file and zip_file:
-                    st.success("Production Complete!")
-                    
-                    st.write("### ⬇️ Downloads")
-                    col_d1, col_d2 = st.columns(2)
-                    
-                    with col_d1:
-                        with open(final_file, "rb") as f:
-                            st.download_button("🎵 Master Track (MP3)", f, "toefl_master.mp3", type="primary")
-                        st.audio(final_file)
-                        
-                    with col_d2:
-                        with open(zip_file, "rb") as fz:
-                            st.download_button("🗂️ Individual Clips (ZIP)", fz, "clips.zip")
-
-
 st.set_page_config(page_title="TOEFL 2026 Audio Studio", layout="wide", initial_sidebar_state="expanded")
 
 # --- Configuration ---
@@ -518,11 +490,21 @@ with col_preview:
             if not key_eleven:
                 st.error("ElevenLabs Key missing")
             else:
-                final_file = produce_audio(edited_df, task_config, key_eleven)
-                if final_file:
+                final_file, zip_file = produce_audio(edited_df, task_config, key_eleven)
+                
+                if final_file and zip_file:
                     st.success("Production Complete!")
-                    st.audio(final_file)
-                    with open(final_file, "rb") as f:
-                        st.download_button("Download MP3", f, "toefl_track.mp3")
+                    
+                    st.write("### ⬇️ Downloads")
+                    col_d1, col_d2 = st.columns(2)
+                    
+                    with col_d1:
+                        with open(final_file, "rb") as f:
+                            st.download_button("🎵 Master Track (MP3)", f, "toefl_master.mp3", type="primary")
+                        st.audio(final_file)
+                        
+                    with col_d2:
+                        with open(zip_file, "rb") as fz:
+                            st.download_button("🗂️ Individual Clips (ZIP)", fz, "clips.zip")
     else:
         st.info("Paste your script and click Analyze to begin.")
