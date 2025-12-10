@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import subprocess
 import io
+import zipfile
 from dotenv import load_dotenv
 
 import google.generativeai as genai
@@ -11,6 +12,218 @@ from elevenlabs import save, VoiceSettings
 
 # Load env variables
 load_dotenv()
+
+st.set_page_config(page_title="TOEFL 2026 Audio Studio", layout="wide", initial_sidebar_state="expanded")
+
+# ... (Previous config code would be here, but let's just make sure the function starts correctly)
+
+# --- Configuration ---
+OUTPUT_DIR_RAW = "output_toefl_raw"
+OUTPUT_DIR_FINAL = "output_toefl_final"
+FINAL_FILENAME = "toefl_master_track.mp3"
+
+for d in [OUTPUT_DIR_RAW, OUTPUT_DIR_FINAL]:
+    os.makedirs(d, exist_ok=True)
+
+# --- TOEFL Task Presets ---
+TOEFL_CONFIGS = {
+    "Listening Section": {
+        "Academic Lecture": {
+            "desc": "Professors delivering an academic talk.",
+            "roles": ["Narrator", "Professor", "Student"],
+            "pause_rule": "Standard (0.5s)",
+            "voice_style": {"Professor": "Stable", "Student": "Neutral"},
+            "mix_logic": "standard"
+        },
+        "Campus Conversation": {
+            "desc": "A student speaking with a university employee.",
+            "roles": ["Narrator", "Student", "Service Employee"],
+            "pause_rule": "Standard (0.5s)",
+            "voice_style": {"Student": "Casual", "Employee": "Professional"},
+            "mix_logic": "standard"
+        },
+        "Peer-to-Peer (New 2026)": {
+            "desc": "Two students discussing a project.",
+            "roles": ["Narrator", "Student A", "Student B"],
+            "pause_rule": "Fast (0.1s)",
+            "voice_style": {"Student A": "Unstable", "Student B": "Unstable"},
+            "mix_logic": "p2p"
+        }
+    },
+    "Speaking Section": {
+        "Listen & Repeat (New 2026)": {
+            "desc": "Short sentences to repeat.",
+            "roles": ["Narrator"],
+            "pause_rule": "Dynamic (1.5x Duration)",
+            "voice_style": {"Narrator": "High Clarity"},
+            "mix_logic": "listen_repeat"
+        },
+        "Virtual Interview (New 2026)": {
+            "desc": "Interviewer asking 5 questions.",
+            "roles": ["Interviewer"],
+            "pause_rule": "Dynamic (5s)",
+            "voice_style": {"Interviewer": "Encouraging"},
+            "mix_logic": "interview"
+        }
+    }
+}
+
+VOICE_REGISTRY = {
+    "Narrator": {"id": "cjVigY5qzO86Huf0OWal", "stability": 0.90, "similarity": 0.75}, # Eric
+    "Professor": {"id": "iP95p4xoKVk53GoZ742B", "stability": 0.80, "similarity": 0.80}, # Chris
+    "Interviewer": {"id": "EXAVITQu4vr4xnSDxMaL", "stability": 0.75, "similarity": 0.75}, # Sarah
+    "Service Employee": {"id": "EXAVITQu4vr4xnSDxMaL", "stability": 0.80, "similarity": 0.75}, # Sarah
+    "Student (M)": {"id": "CwhRBWXzGAHq8TQ4Fs17", "stability": 0.50, "similarity": 0.75}, # Roger
+    "Student (F)": {"id": "FGY2WhTYpPnrIDTdsKH5", "stability": 0.45, "similarity": 0.75}, # Laura
+}
+
+def get_voice_for_role(role_name, task_config):
+    r = str(role_name).lower()
+    if "narrator" in r: return VOICE_REGISTRY["Narrator"]
+    if "interview" in r: return VOICE_REGISTRY["Interviewer"]
+    if "prof" in r: return VOICE_REGISTRY["Professor"]
+    if "man" in r or "male" in r: return VOICE_REGISTRY["Student (M)"]
+    if "woman" in r or "female" in r: return VOICE_REGISTRY["Student (F)"]
+    return VOICE_REGISTRY["Student (F)"]
+
+def parse_with_gemini(text, task_name, task_info, api_key):
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    prompt = f"""
+    You are a TOEFL Script Formatter.
+    Task: {task_name} (Roles: {", ".join(task_info['roles'])})
+    RULES:
+    1. Parse text to CSV (role, text).
+    2. "Listen to..." lines are Narrator lines (SPOKEN TEXT).
+    3. Quotes around 'text'.
+    4. Start immediately.
+    """
+    try:
+        response = model.generate_content([prompt, text])
+        return pd.read_csv(io.StringIO(response.text), quotechar='"', skipinitialspace=True)
+    except Exception as e:
+        return None
+
+def get_audio_duration(file_path):
+    cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", file_path]
+    try:
+        return float(subprocess.run(cmd, capture_output=True, text=True).stdout.strip())
+    except: return 0.0
+
+def generate_silence(duration, name):
+    path = os.path.join(OUTPUT_DIR_FINAL, name)
+    subprocess.run(["ffmpeg", "-y", "-f", "lavfi", "-i", f"aevalsrc=0:d={duration}", "-q:a", "2", path], 
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return path
+
+def produce_audio(df, task_config, api_key):
+    # 1. Generate
+    prog_bar = st.progress(0, text="Generating Voices...")
+    for i, row in df.iterrows():
+        # ... (generation loop logic unchanged) ...
+        # [Existing generation code stays here]
+        role = row['role']
+        text = row['text']
+        
+        # Resolve Voice Settings
+        v_config = get_voice_for_role(role, task_config)
+        
+        # Override stability for P2P mode if needed
+        stability = v_config['stability']
+        if task_config['mix_logic'] == "p2p" and "Student" in role:
+            stability = 0.45 
+            
+        filename = f"{i:03d}_{role[:5]}.mp3"
+        out_path = os.path.join(OUTPUT_DIR_RAW, filename)
+        
+        try:
+            if not os.path.exists(out_path): # small cache check could be nice but let's overwrite for now
+                audio = client.text_to_speech.convert(
+                    text=text,
+                    voice_id=v_config['id'],
+                    model_id="eleven_multilingual_v2",
+                    voice_settings=VoiceSettings(
+                        stability=stability,
+                        similarity_boost=v_config['similarity'],
+                        use_speaker_boost=True
+                    )
+                )
+                save(audio, out_path)
+            assets.append(out_path)
+        except Exception as e:
+            st.error(f"Gen Error: {e}")
+            return None, None
+        prog_bar.progress((i+1)/len(df))
+        
+    # 2. Mix
+    st.write("Mixing Audio Track...")
+    concat_path = os.path.join(OUTPUT_DIR_FINAL, "concat.txt")
+    mix_logic = task_config['mix_logic']
+    
+    with open(concat_path, 'w') as f:
+        for i, path in enumerate(assets):
+            abs_path = os.path.abspath(path)
+            f.write(f"file '{abs_path}'\n")
+            
+            pause = 0.5
+            if mix_logic == "p2p": pause = 0.1
+            elif mix_logic == "listen_repeat":
+                dur = get_audio_duration(path)
+                pause = max(2.0, dur * 1.5)
+            elif mix_logic == "interview": pause = 5.0
+                
+            if i < len(assets) - 1:
+                sil = generate_silence(pause, f"sil_{i}.mp3")
+                sil_abs = os.path.abspath(sil)
+                f.write(f"file '{sil_abs}'\n")
+                
+    final_path = os.path.join(OUTPUT_DIR_FINAL, FINAL_FILENAME)
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_path, "-c", "copy", final_path],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        st.error(f"FFmpeg Merge Failed: {e.stderr.decode()}")
+        return None, None
+
+    # 3. Zip Creation
+    zip_path = os.path.join(OUTPUT_DIR_FINAL, "clips.zip")
+    with zipfile.ZipFile(zip_path, 'w') as zipf:
+        for asset in assets:
+            zipf.write(asset, os.path.basename(asset))
+
+    return final_path, zip_path
+
+# ... (UI code) ...
+
+with col_preview:
+    st.subheader("2. Production")
+    
+    if 'df' in st.session_state:
+        edited_df = st.data_editor(st.session_state['df'], num_rows="dynamic", use_container_width=True)
+        
+        if st.button("🎙️ Generate Audio Track"):
+            if not key_eleven:
+                st.error("ElevenLabs Key missing")
+            else:
+                final_file, zip_file = produce_audio(edited_df, task_config, key_eleven)
+                
+                if final_file and zip_file:
+                    st.success("Production Complete!")
+                    
+                    st.write("### ⬇️ Downloads")
+                    col_d1, col_d2 = st.columns(2)
+                    
+                    with col_d1:
+                        with open(final_file, "rb") as f:
+                            st.download_button("🎵 Master Track (MP3)", f, "toefl_master.mp3", type="primary")
+                        st.audio(final_file)
+                        
+                    with col_d2:
+                        with open(zip_file, "rb") as fz:
+                            st.download_button("🗂️ Individual Clips (ZIP)", fz, "clips.zip")
+
 
 st.set_page_config(page_title="TOEFL 2026 Audio Studio", layout="wide", initial_sidebar_state="expanded")
 
